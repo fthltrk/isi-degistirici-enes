@@ -74,7 +74,7 @@ class EGRCoolerApp(ctk.CTk):
 
     def create_input(self, label_text, default_val):
         frame = ctk.CTkFrame(self, fg_color="transparent")
-        frame.pack(pady=3, fill="x", px=25)
+        frame.pack(pady=3, fill="x", padx=25)
         lbl = ctk.CTkLabel(frame, text=label_text, width=320, anchor="w", font=("Arial", 11, "bold"))
         lbl.pack(side="left")
         entry = ctk.CTkEntry(frame, width=150)
