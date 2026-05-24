@@ -10,7 +10,7 @@ class EGRGelis_mis_Laboratuvar(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        self.title("EGR Cooler Ar-Ge ve Termal Analiz Laboratuvarı v4.5")
+        self.title("EGR Cooler Ar-Ge ve Termal Analiz Laboratuvarı v4.6")
         self.geometry("1280x880")
         self.resizable(True, True)
 
@@ -132,7 +132,7 @@ class EGRGelis_mis_Laboratuvar(ctk.CTk):
         self.hesapla(hafizaya_yaz=False)
 
     # ----------------------------------------------------------------
-    # SEKME 2: GEOMETRİ VE TASARIM SİHİRBAZI
+    # SEKME 2: GEOMETRİ VE TASARIM SİHİRBAZI (TCL GENİŞLİK HATASI DÜZELTİLDİ)
     # ----------------------------------------------------------------
     def setup_sekme_sihirbaz(self):
         box = ctk.CTkFrame(self.tab_sihirbaz)
@@ -148,8 +148,9 @@ class EGRGelis_mis_Laboratuvar(ctk.CTk):
         self.lbl_sihirbaz_sonuc = ctk.CTkLabel(box, text="Hesaplanan Toplam Alan: -- m²", font=("Arial", 14, "bold"), text_color="cyan")
         self.lbl_sihirbaz_sonuc.pack(pady=25)
 
-        btn_aktar = ctk.CTkButton(box, text="Hesapla ve Alana Aktar 💾", font=("Arial", 13, "bold"), command=self.sihirbazdan_aktar, fg_color="#e67e22", hover_color="#d35400")
-        btn_aktar.pack(pady=10, width=250)
+        # CRITICAL FIX: width parametresi pack() içine değil, CTkButton tanımlamasına eklendi!
+        btn_aktar = ctk.CTkButton(box, text="Hesapla ve Alana Aktar 💾", font=("Arial", 13, "bold"), width=250, command=self.sihirbazdan_aktar, fg_color="#e67e22", hover_color="#d35400")
+        btn_aktar.pack(pady=10)
 
     def sihirbazdan_aktar(self):
         try:
@@ -224,7 +225,7 @@ class EGRGelis_mis_Laboratuvar(ctk.CTk):
             self.canvas_sema.create_text(295, 165, text="➡ AKIŞ YÖNÜ: PARALEL AKIŞ (CO-CURRENT)", fill="#e74c3c", font=("Arial", 9, "bold"))
 
     # ----------------------------------------------------------------
-    # GELİŞMİŞ YERLİ ÜÇLÜ GRAFİK MOTORU (DÜZELTİLDİ)
+    # GELİŞMİŞ YERLİ ÜÇLÜ GRAFİK MOTORU
     # ----------------------------------------------------------------
     def yerli_grafik_ciz(self, T_ei, T_eo, T_si, T_so, NTU, A, C_r, q_max, C_e, U, C_min, akis_tipi):
         self.canvas_grafik.delete("all")
@@ -247,7 +248,7 @@ class EGRGelis_mis_Laboratuvar(ctk.CTk):
 
         # --- GRAFİK 1: SICAKLIK PROFİLİ ---
         ox1 = 60
-        ex1 = eksen_ciz(ox1, "Sıcaklık Değişim Profili", "Konum (EGR Boyu)", "Sıcaklık [°C]")
+        ex1 = eksen_ciz(ox1, "Sıcaklık Değişim Profilini", "Konum (EGR Boyu)", "Sıcaklık [°C]")
         max_t = max(T_ei, T_so, T_eo, T_si) + 40
         min_t = min(T_ei, T_so, T_eo, T_si) - 15
         def t_s(t): return y_bot - (((t - min_t) / (max_t - min_t)) * (y_bot - 60))
@@ -288,7 +289,7 @@ class EGRGelis_mis_Laboratuvar(ctk.CTk):
         self.canvas_grafik.create_line(cur_ntu_x, y_bot, cur_ntu_x, 60, fill="yellow", dash=(5,5))
         self.canvas_grafik.create_text(cur_ntu_x, 50, text=f"NTU:{NTU:.2f}", fill="yellow", font=("Arial", 9, "bold"))
 
-        # --- GRAFİK 3: ALAN ETKİSİ GRAFİĞİ (CRITICAL: Saf 'magenta' dizesi tcl hatasını önler) ---
+        # --- GRAFİK 3: ALAN ETKİSİ GRAFİĞİ ---
         ox3 = ex2 + 80
         ex3 = eksen_ciz(ox3, "Yüzey Alanı - Isı Gücü Etkisi", "Alan [m²]", "Isı Gücü [kW]")
         pts_q = []
