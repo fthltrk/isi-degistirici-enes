@@ -1,4 +1,3 @@
-%%writefile program.py
 import customtkinter as ctk
 import math
 
