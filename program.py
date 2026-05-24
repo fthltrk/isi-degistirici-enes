@@ -3,12 +3,6 @@ import math
 import os
 from tkinter import filedialog, messagebox
 
-# PDF Raporlama için gerekli standart kütüphane araçları
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib import colors
-
 ctk.set_appearance_mode("Dark")  
 ctk.set_default_color_theme("blue") 
 
@@ -16,7 +10,7 @@ class EGRGelis_mis_Laboratuvar(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        self.title("EGR Cooler Ar-Ge ve Termal Analiz Laboratuvarı v4.0")
+        self.title("EGR Cooler Ar-Ge ve Termal Analiz Laboratuvarı v4.5")
         self.geometry("1280x880")
         self.resizable(True, True)
 
@@ -61,15 +55,12 @@ class EGRGelis_mis_Laboratuvar(ctk.CTk):
     # SEKME 1: ANA SİMÜLASYON EKRANI TASARIMI
     # ----------------------------------------------------------------
     def setup_sekme_ana(self):
-        # Sol Panel (Girdiler ve Kontroller)
         self.sol_frame = ctk.CTkScrollableFrame(self.tab_ana, width=460)
         self.sol_frame.pack(side="left", fill="y", padx=10, pady=10)
 
-        # Sağ Panel (Şema ve Rapor)
         self.sag_frame = ctk.CTkFrame(self.tab_ana)
         self.sag_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
 
-        # --- AÇILIR MENÜLER VE SEÇİMLER ---
         # 1. Akış Tipi Seçimi
         ctk.CTkLabel(self.sol_frame, text="Isı Değiştirici Akış Yönü:", font=("Arial", 12, "bold")).pack(pady=(10,2), padx=15, anchor="w")
         self.combo_akis_tipi = ctk.CTkOptionMenu(self.sol_frame, values=["Zıt Akış (Counter-Flow)", "Paralel Akış (Parallel-Flow)"], command=lambda x: self.hesapla())
@@ -93,7 +84,7 @@ class EGRGelis_mis_Laboratuvar(ctk.CTk):
         self.btn_ileri = ctk.CTkButton(nav_frame, text="İleri ➡", width=90, command=self.gecmis_ileri, state="disabled")
         self.btn_ileri.pack(side="right", padx=2)
 
-        # NUMERİK GİRDİLER
+        # Numerik Girdiler
         self.ent_motor_gucu = self.create_num_input(self.sol_frame, "Motor Gücü [kW]:", "120")
         self.ent_deb_e = self.create_num_input(self.sol_frame, "Egzoz Debisi (ṁ_e) [kg/s]:", "0.15")
         self.ent_temp_ei = self.create_num_input(self.sol_frame, "Egzoz Giriş Sıcaklığı [°C]:", "450")
@@ -101,7 +92,7 @@ class EGRGelis_mis_Laboratuvar(ctk.CTk):
         self.ent_temp_si = self.create_num_input(self.sol_frame, "Sıvı Giriş Sıcaklığı [°C]:", "80")
         self.ent_u_katsayi = self.create_num_input(self.sol_frame, "Isı Transfer Katsayısı (U) [W/m²K]:", "280")
 
-        # CANLI DEĞİŞİM SLIDER'I (Alan Kontrolü)
+        # Canlı Slider Kontrolü (Alan)
         ctk.CTkLabel(self.sol_frame, text="Canlı Alan Ayarı (A) [m²]:", font=("Arial", 12, "bold")).pack(pady=(15,0), padx=15, anchor="w")
         self.slider_alan = ctk.CTkSlider(self.sol_frame, from_=0.1, to=3.5, number_of_steps=68, command=self.slider_tetiklendi)
         self.slider_alan.set(1.2)
@@ -109,14 +100,14 @@ class EGRGelis_mis_Laboratuvar(ctk.CTk):
         self.lbl_slider_deger = ctk.CTkLabel(self.sol_frame, text="Mevcut Alan: 1.20 m²", font=("Arial", 11, "italic"), text_color="cyan")
         self.lbl_slider_deger.pack(pady=0, padx=15, anchor="e")
 
-        # AKSİYON BUTONLARI
+        # Aksiyon Butonları
         self.btn_hesapla = ctk.CTkButton(self.sol_frame, text="SİMÜLASYONU ÇALIŞTIR", font=("Arial", 14, "bold"), command=self.hesapla, fg_color="#1f538d")
         self.btn_hesapla.pack(pady=15, padx=15, fill="x")
 
-        self.btn_pdf = ctk.CTkButton(self.sol_frame, text="📄 PDF RAPORU OLUŞTUR", font=("Arial", 13, "bold"), command=self.rapor_pdf_uret, fg_color="#22aa55", hover_color="#1a8844")
+        self.btn_pdf = ctk.CTkButton(self.sol_frame, text="📄 METİN RAPORU OLARAK KAYDET", font=("Arial", 13, "bold"), command=self.rapor_txt_uret, fg_color="#22aa55", hover_color="#1a8844")
         self.btn_pdf.pack(pady=5, padx=15, fill="x")
 
-        # SAĞ PANEL BİLEŞENLERİ (Gelişmiş Mühendislik Şeması)
+        # Sağ Panel Şema ve Çıktı Alanları
         self.canvas_sema = ctk.CTkCanvas(self.sag_frame, width=600, height=230, bg="#1c1c1c", highlightthickness=0)
         self.canvas_sema.pack(pady=10, padx=10, fill="x")
         
@@ -162,14 +153,13 @@ class EGRGelis_mis_Laboratuvar(ctk.CTk):
 
     def sihirbazdan_aktar(self):
         try:
-            d = float(self.ent_sihirbaz_d.get()) / 1000.0 # mm -> m
-            L = float(self.ent_sihirbaz_l.get()) / 1000.0 # mm -> m
+            d = float(self.ent_sihirbaz_d.get()) / 1000.0
+            L = float(self.ent_sihirbaz_l.get()) / 1000.0
             N = float(self.ent_sihirbaz_n.get())
             
             hesaplanan_alan = math.pi * d * L * N
             self.lbl_sihirbaz_sonuc.configure(text=f"Hesaplanan Toplam Alan: {hesaplanan_alan:.4f} m²")
             
-            # Ana ekrandaki slider'ı ve simülasyonu güncelle
             self.slider_alan.set(min(max(hesaplanan_alan, 0.1), 3.5))
             self.lbl_slider_deger.configure(text=f"Mevcut Alan: {hesaplanan_alan:.2f} m²")
             
@@ -192,18 +182,17 @@ class EGRGelis_mis_Laboratuvar(ctk.CTk):
     def sema_ciz(self, T_ei, T_si, T_eo, T_so, akis_tipi):
         self.canvas_sema.delete("all")
         
-        # Gövde Tasarımı (Mühendislik Sembolü)
+        # Gövde Çizimi
         self.canvas_sema.create_oval(110, 60, 160, 160, fill="#2c3e50", outline="#7f8c8d", width=2) 
         self.canvas_sema.create_oval(430, 60, 480, 160, fill="#2c3e50", outline="#7f8c8d", width=2) 
         self.canvas_sema.create_rectangle(135, 70, 455, 150, fill="#2b2b2b", outline="#7f8c8d", width=2) 
 
-        # Boru demetleri gösterimi
         for i in range(4):
             self.canvas_sema.create_line(140, 85 + i*18, 450, 85 + i*18, fill="#555555", width=2)
 
         self.canvas_sema.create_text(295, 110, text="EGR BUNDLE COOLER GÖVDE", fill="#ecf0f1", font=("Arial", 11, "bold"))
 
-        # EGZOZ AKIŞI (Her zaman soldan sağa)
+        # Egzoz Akışı (Soldan Sağa)
         self.canvas_sema.create_rectangle(75, 95, 112, 125, fill="#3a3a3a", outline="#7f8c8d", width=1)
         self.canvas_sema.create_line(30, 110, 85, 110, fill="#e74c3c", width=6, arrow="last")
         self.canvas_sema.create_text(65, 80, text=f"Egzoz Giriş\n{T_ei:.1f}°C", fill="#ff7675", font=("Arial", 10, "bold"))
@@ -212,9 +201,8 @@ class EGRGelis_mis_Laboratuvar(ctk.CTk):
         self.canvas_sema.create_line(510, 110, 565, 110, fill="#e67e22", width=6, arrow="last")
         self.canvas_sema.create_text(535, 80, text=f"Egzoz Çıkış\n{T_eo:.1f}°C", fill="#f39c12", font=("Arial", 10, "bold"))
 
-        # SOĞUTUCU SIVI AKIŞI (Seçime Göre Yön Değiştirir!)
+        # Akış Yönüne Göre Sıvı Okları
         if "Zıt" in akis_tipi:
-            # Sağ üstten girer, sol alttan çıkar
             self.canvas_sema.create_rectangle(435, 35, 465, 72, fill="#2c3e50", outline="#7f8c8d", width=1)
             self.canvas_sema.create_line(450, 8, 450, 45, fill="#3498db", width=5, arrow="last")
             self.canvas_sema.create_text(450, -3, text=f"Sıvı Giriş: {T_si:.1f}°C", fill="#74b9ff", font=("Arial", 9, "bold"), anchor="s")
@@ -225,7 +213,6 @@ class EGRGelis_mis_Laboratuvar(ctk.CTk):
             
             self.canvas_sema.create_text(295, 165, text="⬅ AKIŞ YÖNÜ: ZIT AKIŞ (COUNTER)", fill="#74b9ff", font=("Arial", 9, "bold"))
         else:
-            # Paralel Akış: Sol üstten girer, sağ alttan çıkar
             self.canvas_sema.create_rectangle(125, 35, 155, 72, fill="#2c3e50", outline="#7f8c8d", width=1)
             self.canvas_sema.create_line(140, 8, 140, 45, fill="#3498db", width=5, arrow="last")
             self.canvas_sema.create_text(140, -3, text=f"Sıvı Giriş: {T_si:.1f}°C", fill="#74b9ff", font=("Arial", 9, "bold"), anchor="s")
@@ -237,7 +224,7 @@ class EGRGelis_mis_Laboratuvar(ctk.CTk):
             self.canvas_sema.create_text(295, 165, text="➡ AKIŞ YÖNÜ: PARALEL AKIŞ (CO-CURRENT)", fill="#e74c3c", font=("Arial", 9, "bold"))
 
     # ----------------------------------------------------------------
-    # GELİŞMİŞ YERLİ ÜÇLÜ GRAFİK MOTORU
+    # GELİŞMİŞ YERLİ ÜÇLÜ GRAFİK MOTORU (DÜZELTİLDİ)
     # ----------------------------------------------------------------
     def yerli_grafik_ciz(self, T_ei, T_eo, T_si, T_so, NTU, A, C_r, q_max, C_e, U, C_min, akis_tipi):
         self.canvas_grafik.delete("all")
@@ -265,12 +252,10 @@ class EGRGelis_mis_Laboratuvar(ctk.CTk):
         min_t = min(T_ei, T_so, T_eo, T_si) - 15
         def t_s(t): return y_bot - (((t - min_t) / (max_t - min_t)) * (y_bot - 60))
 
-        # Egzoz Çizgisi (Her zaman soldan sağa düşer)
         self.canvas_grafik.create_line(ox1, t_s(T_ei), ex1, t_s(T_eo), fill="#ff7675", width=3)
         self.canvas_grafik.create_text(ox1-8, t_s(T_ei), text=f"{int(T_ei)}°C", fill="#ff7675", font=("Arial", 9), anchor="e")
         self.canvas_grafik.create_text(ex1+8, t_s(T_eo), text=f"{int(T_eo)}°C", fill="#f39c12", font=("Arial", 9), anchor="w")
 
-        # Soğutucu Sıvı Çizgisi (Akış tipine göre yönü değişir!)
         if "Zıt" in akis_tipi:
             self.canvas_grafik.create_line(ox1, t_s(T_so), ex1, t_s(T_si), fill="#74b9ff", width=3)
             self.canvas_grafik.create_text(ox1-8, t_s(T_so), text=f"{int(T_so)}°C", fill="#55efc4", font=("Arial", 9), anchor="e")
@@ -280,7 +265,7 @@ class EGRGelis_mis_Laboratuvar(ctk.CTk):
             self.canvas_grafik.create_text(ox1-8, t_s(T_si), text=f"{int(T_si)}°C", fill="#74b9ff", font=("Arial", 9), anchor="e")
             self.canvas_grafik.create_text(ex1+8, t_s(T_so), text=f"{int(T_so)}°C", fill="#55efc4", font=("Arial", 9), anchor="w")
 
-        # --- GRAFİK 2: NTU - ÇIKIŞ ANALİZİ ---
+        # --- GRAFİK 2: NTU ANALİZİ ---
         ox2 = ex1 + 80
         ex2 = eksen_ciz(ox2, "NTU - Çıkış Sıcaklığı Analizi", "NTU Sayısı", "Egzoz Çıkış [°C]")
         pts_n = []
@@ -303,7 +288,7 @@ class EGRGelis_mis_Laboratuvar(ctk.CTk):
         self.canvas_grafik.create_line(cur_ntu_x, y_bot, cur_ntu_x, 60, fill="yellow", dash=(5,5))
         self.canvas_grafik.create_text(cur_ntu_x, 50, text=f"NTU:{NTU:.2f}", fill="yellow", font=("Arial", 9, "bold"))
 
-        # --- GRAFİK 3: ALAN - ISI GÜCÜ GRAFİĞİ (DÜZELTİLDİ: "magenta" hatasız çizim) ---
+        # --- GRAFİK 3: ALAN ETKİSİ GRAFİĞİ (CRITICAL: Saf 'magenta' dizesi tcl hatasını önler) ---
         ox3 = ex2 + 80
         ex3 = eksen_ciz(ox3, "Yüzey Alanı - Isı Gücü Etkisi", "Alan [m²]", "Isı Gücü [kW]")
         pts_q = []
@@ -324,7 +309,6 @@ class EGRGelis_mis_Laboratuvar(ctk.CTk):
             pts_q.append((px, py))
 
         for i in range(len(pts_q)-1):
-            # Standart 'magenta' rengi sorunsuz çalışır
             self.canvas_grafik.create_line(pts_q[i][0], pts_q[i][1], pts_q[i+1][0], pts_q[i+1][1], fill="magenta", width=2.5)
 
         cur_a_x = ox3 + (A / m_a_plot) * (ex3 - ox3)
@@ -332,11 +316,10 @@ class EGRGelis_mis_Laboratuvar(ctk.CTk):
         self.canvas_grafik.create_text(cur_a_x, 50, text=f"A:{A:.2f}m²", fill="cyan", font=("Arial", 9, "bold"))
 
     # ----------------------------------------------------------------
-    # ANA MATEMATİKSEL SİMÜLASYON MOTORU (e-NTU)
+    # TERMOMÜHENDİSLİK HESAPLAMA MOTORU
     # ----------------------------------------------------------------
     def hesapla(self, hafizaya_yaz=True):
         try:
-            # Girdileri oku
             akis_tipi = self.combo_akis_tipi.get()
             egzoz_adi = self.combo_egzoz.get()
             sogutucu_adi = self.combo_sogutucu.get()
@@ -355,7 +338,6 @@ class EGRGelis_mis_Laboratuvar(ctk.CTk):
             if hafizaya_yaz:
                 self.gecmis_hafizaya_ekle([akis_tipi, egzoz_adi, sogutucu_adi, P_motor, m_dot_e, T_e_in, m_dot_s, T_s_in, U, A])
 
-            # Termal denklemler
             C_e = m_dot_e * cp_e
             C_s = m_dot_s * cp_s
             C_min = min(C_e, C_s)
@@ -364,7 +346,6 @@ class EGRGelis_mis_Laboratuvar(ctk.CTk):
             
             NTU = (U * A) / C_min
 
-            # Seçilen akış yönüne göre formül değişimi
             if "Zıt" in akis_tipi:
                 epsilon = (1 - math.exp(-NTU * (1 - C_r))) / (1 - C_r * math.exp(-NTU * (1 - C_r))) if C_r != 1 else NTU / (1 + NTU)
             else:
@@ -377,7 +358,6 @@ class EGRGelis_mis_Laboratuvar(ctk.CTk):
             T_e_out = T_e_in - (q / C_e)
             T_s_out = T_s_in + (q / C_s)
 
-            # LMTD Hesabı
             if "Zıt" in akis_tipi:
                 dt1 = T_e_in - T_s_out
                 dt2 = T_e_out - T_s_in
@@ -390,11 +370,9 @@ class EGRGelis_mis_Laboratuvar(ctk.CTk):
             else:
                 LMTD = (dt1 + dt2) / 2.0
 
-            # Grafik ve şemayı güncelle
             self.sema_ciz(T_e_in, T_s_in, T_e_out, T_s_out, akis_tipi)
             self.yerli_grafik_ciz(T_e_in, T_e_out, T_s_in, T_s_out, NTU, A, C_r, q_max, C_e, U, C_min, akis_tipi)
 
-            # Ekrana rapor yazdır
             self.son_analiz_raporu = {
                 "akis_tipi": akis_tipi, "egzoz_adi": egzoz_adi, "sogutucu_adi": sogutucu_adi,
                 "P_motor": P_motor, "m_dot_e": m_dot_e, "T_e_in": T_e_in, "m_dot_s": m_dot_s,
@@ -421,7 +399,6 @@ class EGRGelis_mis_Laboratuvar(ctk.CTk):
             self.txt_sonuc.delete("0.0", "end")
             self.txt_sonuc.insert("0.0", sonuc_txt)
 
-            # Sistem Durum Uyarı Çubuğu
             if T_e_out > 190:
                 self.renk_bar.configure(fg_color="#c0392b", text="⚠️ KRİTİK SEVİYE: Egzoz gazı yeterince soğutulamıyor, alanı büyütün.")
             elif 110 <= T_e_out <= 190:
@@ -434,56 +411,53 @@ class EGRGelis_mis_Laboratuvar(ctk.CTk):
             self.txt_sonuc.insert("0.0", f"Hata Oluştu: {str(e)}")
 
     # ----------------------------------------------------------------
-    # PDF RAPORLAMA SİSTEMİ
+    # GARANTİLİ METİN RAPORLAMA ÇIKTI MOTORU (.txt)
     # ----------------------------------------------------------------
-    def rapor_pdf_uret(self):
+    def rapor_txt_uret(self):
         try:
-            dosya_yolu = filedialog.asksaveasfilename(defaultextension=".pdf", filetypes=[("PDF Dosyası", "*.pdf")], title="Raporu Kaydet")
+            dosya_yolu = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Metin Belgesi", "*.txt")], title="Mühendislik Raporunu Kaydet")
             if not dosya_yolu: return
 
-            doc = SimpleDocTemplate(dosya_yolu, pagesize=letter)
-            styles = getSampleStyleSheet()
-            
-            # Özel başlık stili
-            baslik_stili = ParagraphStyle('Baslik', parent=styles['Heading1'], fontSize=18, textColor=colors.HexColor('#1f538d'), spaceAfter=15, alignment=1)
-            normal_stil = ParagraphStyle('Normal_Rapor', parent=styles['Normal'], fontSize=11, spaceAfter=8)
-
-            hikaye = []
             r = self.son_analiz_raporu
+            
+            rapor_metni = (
+                f"====================================================================\n"
+                f"      EGR COOLER TERMAL MÜHENDİSLİK VE AR-GE ANALİZ RAPORU\n"
+                f"====================================================================\n"
+                f" Geliştiren Tasarımcı : Enes Çelik Simülasyon Sistemleri\n"
+                f" Rapor Detayı         : Otomatik Çıktı ve Matris Şablonu\n"
+                f"--------------------------------------------------------------------\n\n"
+                f" [1] SİSTEM VE AKIŞKAN ÖZELLİKLERİ\n"
+                f" --------------------------------------------------------------------\n"
+                f" * Isı Değiştirici Akış Tipi      : {r['akis_tipi']}\n"
+                f" * Kullanılan Motor Yakıt/Gaz Tipi: {r['egzoz_adi']}\n"
+                f" * Seçilen Soğutucu Akışkan Tipi  : {r['sogutucu_adi']}\n"
+                f" * Referans Motor Gücü            : {r['P_motor']:.1f} kW\n\n"
+                f" [2] GEOMETRİK VE TERMAL GEÇİŞ VERİLERİ\n"
+                f" --------------------------------------------------------------------\n"
+                f" * Aktif Isı Transfer Alanı (A)   : {r['A']:.4f} m²\n"
+                f" * Toplam Isı Geçiş Katsayısı (U) : {r['U']:.1f} W/m²K\n"
+                f" * Logaritmik Ort. Sıcaklık Farkı : {r['LMTD']:.2f} °C\n"
+                f" * Hesaplanan Sınır NTU Sayısı    : {r['NTU']:.4f}\n\n"
+                f" [3] ENERJİ BİLANÇOSU VE SİMÜLASYON ÇIKTILARI\n"
+                f" --------------------------------------------------------------------\n"
+                f" * EGZOZ GAZ Giriş Sıcaklığı      : {r['T_e_in']:.1f} °C\n"
+                f" * EGZOZ GAZ Çıkış Sıcaklığı     : {r['T_e_out']:.2f} °C\n"
+                f" * SOĞUTUCU SIVI Giriş Sıcaklığı  : {r['T_s_in']:.1f} °C\n"
+                f" * SOĞUTUCU SIVI Çıkış Sıcaklığı : {r['T_s_out']:.2f} °C\n"
+                f" * Geri Kazanılan Toplam Isı Gücü : {r['q_kw']:.2f} kW\n"
+                f" * Sistem Termal Etkinliği (Verim): % {r['verim']:.2f}\n"
+                f"====================================================================\n"
+                f"                    RAPOR SONU - GÜVENLİ ÇIKTI\n"
+                f"====================================================================\n"
+            )
 
-            hikaye.append(Paragraph("EGR Cooler Termal Mühendislik Analiz Raporu", baslik_stili))
-            hikaye.append(Paragraph("Bu teknik rapor Enes Çelik simülasyon motoru tarafından üretilmiştir.", ParagraphStyle('ItalicSub', parent=normal_stil, fontName='Helvetica-Oblique', textColor=colors.gray)))
-            hikaye.append(Spacer(1, 15))
+            with open(dosya_yolu, "w", encoding="utf-8") as f:
+                f.write(rapor_metni)
 
-            data = [
-                ["Parametre Adı", "Girdi Değeri", "Analiz Sonucu", "Birim"],
-                ["Akış Tipi", r["akis_tipi"], "-", "-"],
-                ["Yakıt / Gaz Türü", r["egzoz_adi"], "-", "-"],
-                ["Soğutucu Akışkan", r["sogutucu_adi"], "-", "-"],
-                ["Isı Transfer Alanı (A)", f"{r['A']:.4f}", "-", "m²"],
-                ["Egzoz Giriş / Çıkış Sıcaklığı", f"{r['T_e_in']:.1f}", f"{r['T_e_out']:.2f}", "°C"],
-                ["Sıvı Giriş / Çıkış Sıcaklığı", f"{r['T_s_in']:.1f}", f"{r['T_s_out']:.2f}", "°C"],
-                ["Transfer Edilen Isı Gücü", "-", f"{r['q_kw']:.2f}", "kW"],
-                ["Isı Değiştirici Verimi", "-", f"% {r['verim']:.2f}", "-"],
-                ["LMTD / NTU Sayıları", "-", f"{r['LMTD']:.2f} / {r['NTU']:.2f}", "-"]
-            ]
-
-            t = Table(data, colWidths=[200, 110, 110, 70])
-            t.setStyle(TableStyle([
-                ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#1f538d')),
-                ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
-                ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-                ('BOTTOMPADDING', (0,0), (-1,0), 8),
-                ('BACKGROUND', (0,1), (-1,-1), colors.HexColor('#f5f6fa')),
-                ('GRID', (0,0), (-1,-1), 1, colors.HexColor('#dcdde1')),
-                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold')
-            ]))
-
-            hikaye.append(t)
-            doc.build(hikaye)
-            messagebox.showinfo("Başarılı", f"Mühendislik PDF raporu başarıyla oluşturuldu:\n{dosya_yolu}")
+            messagebox.showinfo("Başarılı", f"Mühendislik analiz raporu sıfır hatayla kaydedildi:\n{dosya_yolu}")
         except Exception as e:
-            messagebox.showerror("PDF Hatası", f"PDF raporu yazılırken hata çıktı: {str(e)}")
+            messagebox.showerror("Rapor Hatası", f"Rapor yazılırken sistemsel hata çıktı: {str(e)}")
 
     # ----------------------------------------------------------------
     # GEÇMİŞ YÖNETİMİ HAFİZA SİSTEMİ
